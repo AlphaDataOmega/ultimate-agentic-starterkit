@@ -1,0 +1,27 @@
+{
+  "description": "Review code changes with advisor agent",
+  "handler": "review_code",
+  "parameters": {
+    "file_path": {
+      "type": "string",
+      "description": "Path to file to review",
+      "required": true
+    },
+    "review_type": {
+      "type": "string",
+      "description": "Type of review to perform",
+      "default": "general",
+      "enum": ["general", "security", "performance", "style", "documentation"]
+    }
+  },
+  "examples": [
+    {
+      "file_path": "StarterKit/agents/parser_agent.py",
+      "review_type": "security"
+    },
+    {
+      "file_path": "StarterKit/core/config.py",
+      "review_type": "performance"
+    }
+  ]
+}

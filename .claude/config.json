@@ -1,0 +1,45 @@
+{
+  "version": "1.0.0",
+  "workspace_root": "/home/ubuntu/alphadataomega",
+  "commands_dir": "/home/ubuntu/alphadataomega/.claude/commands",
+  "hooks_dir": "/home/ubuntu/alphadataomega/.claude/hooks",
+  "integrations": {
+    "claude_code": {
+      "enabled": true,
+      "auto_setup": true
+    },
+    "git_manager": {
+      "enabled": true,
+      "validation_gates": {
+        "linting": true,
+        "type_checking": true,
+        "unit_tests": true,
+        "security_scan": false,
+        "dependency_check": false
+      }
+    },
+    "ollama_client": {
+      "enabled": true,
+      "base_url": "http://localhost:11434",
+      "timeout": 30.0,
+      "auto_pull_models": false,
+      "default_models": {
+        "chat": "llama3.2:latest",
+        "code": "codellama:latest",
+        "tools": "mistral:latest"
+      }
+    }
+  },
+  "monitoring": {
+    "enabled": true,
+    "health_check_interval": 60,
+    "max_instances_per_type": 3
+  },
+  "voice_alerts": {
+    "enabled": true,
+    "milestone_alerts": true,
+    "error_alerts": true
+  },
+  "created_at": "2024-01-01T00:00:00Z",
+  "last_updated": "2024-01-01T00:00:00Z"
+}

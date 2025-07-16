@@ -1,0 +1,19 @@
+{
+  "description": "Validate project structure and dependencies",
+  "handler": "validate_project",
+  "parameters": {
+    "deep_check": {
+      "type": "boolean",
+      "description": "Perform deep validation checks",
+      "default": false
+    }
+  },
+  "examples": [
+    {
+      "deep_check": false
+    },
+    {
+      "deep_check": true
+    }
+  ]
+}

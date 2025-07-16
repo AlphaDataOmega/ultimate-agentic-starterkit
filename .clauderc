@@ -1,0 +1,62 @@
+{
+  "hooks": {
+    "workflow_start": {
+      "enabled": true,
+      "command": "python -m StarterKit.workflows.claude_code_hooks workflow_start",
+      "timeout": 30,
+      "shell": true
+    },
+    "workflow_complete": {
+      "enabled": true,
+      "command": "python -m StarterKit.workflows.claude_code_hooks workflow_complete",
+      "timeout": 60,
+      "shell": true
+    },
+    "task_start": {
+      "enabled": true,
+      "command": "python -m StarterKit.workflows.claude_code_hooks task_start",
+      "timeout": 15,
+      "shell": true
+    },
+    "task_complete": {
+      "enabled": true,
+      "command": "python -m StarterKit.workflows.claude_code_hooks task_complete",
+      "timeout": 30,
+      "shell": true
+    },
+    "milestone_reached": {
+      "enabled": true,
+      "command": "python -m StarterKit.workflows.claude_code_hooks milestone_reached",
+      "timeout": 20,
+      "shell": true
+    },
+    "progress_update": {
+      "enabled": true,
+      "command": "python -m StarterKit.workflows.claude_code_hooks progress_update",
+      "timeout": 15,
+      "shell": true
+    },
+    "error_occurred": {
+      "enabled": true,
+      "command": "python -m StarterKit.workflows.claude_code_hooks error_occurred",
+      "timeout": 30,
+      "shell": true
+    }
+  },
+  "workflow_settings": {
+    "enable_progress_tracking": true,
+    "enable_voice_alerts": true,
+    "enable_advisor_review": true,
+    "auto_milestone_creation": true,
+    "milestone_thresholds": [25, 50, 75, 90, 100],
+    "confidence_threshold": 0.8,
+    "high_confidence_threshold": 0.95
+  },
+  "integration_settings": {
+    "starterkit_path": "./StarterKit",
+    "log_level": "INFO",
+    "max_concurrent_hooks": 5,
+    "hook_retry_count": 3,
+    "hook_retry_delay": 2
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "description": "Execute full agent workflow",
+  "handler": "execute_agent_flow",
+  "parameters": {
+    "prp_file": {
+      "type": "string",
+      "description": "Path to PRP file to execute",
+      "required": true
+    },
+    "validate_only": {
+      "type": "boolean",
+      "description": "Only validate without executing",
+      "default": false
+    }
+  },
+  "examples": [
+    {
+      "prp_file": "PRPs/001A_foundation_core.md",
+      "validate_only": false
+    },
+    {
+      "prp_file": "PRPs/generated_1234567890.md",
+      "validate_only": true
+    }
+  ]
+}

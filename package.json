@@ -1,0 +1,44 @@
+{
+  "name": "starter-kit",
+  "version": "1.0.0",
+  "description": "Comprehensive starter kit with PRP system and visual testing capabilities",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "visual-test": "node testing/scripts/visual-test.js",
+    "prp-validate": "node testing/scripts/prp-visual-validator.js",
+    "setup-testing": "npm install && echo 'Visual testing dependencies installed'",
+    "test:visual": "npm run visual-test",
+    "test:prp": "npm run prp-validate",
+    "docs:serve": "echo 'Documentation server not configured yet'",
+    "lint": "echo 'Linting not configured yet'",
+    "format": "echo 'Formatting not configured yet'"
+  },
+  "dependencies": {
+    "puppeteer": "^21.0.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.0.0",
+    "prettier": "^3.0.0"
+  },
+  "keywords": [
+    "starter-kit",
+    "prp",
+    "visual-testing",
+    "automation",
+    "puppeteer"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "bin": {
+    "visual-test": "./testing/scripts/visual-test.js",
+    "prp-validate": "./testing/scripts/prp-visual-validator.js"
+  }
+}

@@ -1,0 +1,39 @@
+# Core Python packages for Ultimate Agentic StarterKit
+python-dotenv==1.0.0
+pydantic==2.10.3
+pyttsx3==2.90
+python-multipart==0.0.6
+typing-extensions==4.9.0
+huggingface-hub==0.20.3
+
+# AI/ML Libraries for Agent Framework
+anthropic==0.20.0
+openai==1.10.0
+sentence-transformers==2.2.2
+scikit-learn==1.3.2
+numpy==1.24.3
+asyncio
+aiohttp==3.9.1
+
+# Development and testing dependencies
+pytest==7.4.4
+pytest-asyncio==0.23.2
+pytest-cov==4.1.0
+black==23.12.1
+ruff==0.1.9
+mypy==1.8.0
+
+# Logging and monitoring
+structlog==23.2.0
+rich==13.7.0
+
+# Additional utilities
+click==8.1.7
+jinja2==3.1.2
+pyyaml==6.0.1
+psutil==5.9.8
+
+# Mac-specific dependency for voice alerts
+pyobjc-core==10.1; sys_platform == "darwin"
+pyobjc-framework-Cocoa==10.1; sys_platform == "darwin"
+pyobjc-framework-AppKit==10.1; sys_platform == "darwin"

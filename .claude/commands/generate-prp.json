@@ -1,0 +1,27 @@
+{
+  "description": "Generate new PRP from description",
+  "handler": "generate_prp",
+  "parameters": {
+    "description": {
+      "type": "string",
+      "description": "Description of the feature to implement",
+      "required": true
+    },
+    "project_type": {
+      "type": "string",
+      "description": "Type of project (web, ai, blockchain, general)",
+      "default": "general",
+      "enum": ["web", "ai", "blockchain", "general"]
+    }
+  },
+  "examples": [
+    {
+      "description": "Create a user authentication system",
+      "project_type": "web"
+    },
+    {
+      "description": "Implement a neural network for image classification",
+      "project_type": "ai"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "description": "Create new agent from template",
+  "handler": "create_agent",
+  "parameters": {
+    "agent_name": {
+      "type": "string",
+      "description": "Name for the new agent",
+      "required": true
+    },
+    "agent_type": {
+      "type": "string",
+      "description": "Type of agent to create",
+      "default": "general",
+      "enum": ["general", "parser", "coder", "tester", "advisor", "orchestrator"]
+    }
+  },
+  "examples": [
+    {
+      "agent_name": "custom_parser",
+      "agent_type": "parser"
+    },
+    {
+      "agent_name": "security_advisor",
+      "agent_type": "advisor"
+    }
+  ]
+}
