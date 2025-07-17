@@ -12,9 +12,9 @@ from datetime import datetime
 from pathlib import Path
 from enum import Enum
 
-from ..core.logger import get_logger
-from ..core.config import get_config
-from ..core.voice_alerts import get_voice_alerts
+from core.logger import get_logger
+from core.config import get_config
+from core.voice_alerts import get_voice_alerts
 from .claude_code import ClaudeCodeIntegration
 from .git_manager import GitManager
 from .ollama_client import OllamaClient

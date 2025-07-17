@@ -24,9 +24,9 @@ except ImportError:
     REQUESTS_AVAILABLE = False
     requests = None
 
-from ..core.logger import get_logger
-from ..core.config import get_config
-from ..core.voice_alerts import get_voice_alerts
+from core.logger import get_logger
+from core.config import get_config
+from core.voice_alerts import get_voice_alerts
 
 
 class OllamaError(Exception):

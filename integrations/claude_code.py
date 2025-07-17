@@ -12,10 +12,10 @@ from typing import Dict, Any, List, Callable
 import asyncio
 from datetime import datetime
 
-from ..core.logger import get_logger
-from ..core.config import get_config
-from ..core.models import AgentType, create_project_task
-from ..core.voice_alerts import get_voice_alerts
+from core.logger import get_logger
+from core.config import get_config
+from core.models import AgentType, create_project_task
+from core.voice_alerts import get_voice_alerts
 
 
 class ClaudeCodeIntegration:
@@ -198,7 +198,7 @@ class ClaudeCodeIntegration:
             self.voice.speak_agent_start("prp_generator", "Generating new PRP")
             
             # Import parser agent (dynamic import to avoid circular dependencies)
-            from ..agents.parser_agent import ParserAgent
+            from agents.parser_agent import ParserAgent
             
             # Create parser agent
             parser = ParserAgent()
@@ -264,7 +264,7 @@ class ClaudeCodeIntegration:
             self.voice.speak_agent_start("workflow_executor", "Starting agent workflow")
             
             # Import workflow components (dynamic import to avoid circular dependencies)
-            from ..workflows.project_builder import ProjectBuilder
+            from workflows.project_builder import ProjectBuilder
             
             # Create project builder
             builder = ProjectBuilder()

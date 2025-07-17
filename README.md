@@ -46,6 +46,15 @@ python kit.py --help
 #### Using the CLI
 
 ```bash
+# Interactive Learning Phase (NEW!)
+python kit.py --learn --overview OVERVIEW.md        # Start learning phase
+python kit.py --accept-learn                         # Accept learning results
+
+# Execute project from OVERVIEW.md
+python kit.py --overview OVERVIEW.md                 # Execute project from overview
+python kit.py --overview OVERVIEW.md --validate      # Validate project first
+python kit.py --overview OVERVIEW.md --dry-run       # Show work orders
+
 # Execute a project from PRP file
 python kit.py --prp PRPs/001A_foundation_core.md
 
@@ -100,6 +109,97 @@ workflow_manager = LangGraphWorkflowManager()
 result = await workflow_manager.execute_workflow(project.dict())
 ```
 
+## 🎓 Interactive Learning Phase
+
+The Ultimate Agentic StarterKit includes an **Interactive Learning Phase** that helps bridge the gap between high-level project ideas and detailed implementation requirements through intelligent questioning and knowledge transfer.
+
+### How It Works
+
+1. **Project Analysis**: The Project Manager Agent (powered by OpenAI o3) analyzes your OVERVIEW.md and identifies knowledge gaps
+2. **Question Generation**: Generates prioritized questions (Critical/MVP/Future) to fill these gaps
+3. **Research Assistance**: The Research Agent provides suggested answers using local knowledge base, Ollama LLM, or web research
+4. **User Review**: You review questions, provide answers, and check off completed items
+5. **Incorporation**: Answers are automatically incorporated back into your OVERVIEW.md
+6. **Iteration**: The process repeats until the project specification is complete
+
+### Learning Phase Workflow
+
+```bash
+# Step 1: Start learning phase
+python kit.py --learn --overview OVERVIEW.md
+
+# The system will:
+# - Analyze your OVERVIEW.md for completeness
+# - Generate prioritized questions in questions.md
+# - Research suggested answers automatically
+# - Prompt you to review and edit questions.md
+
+# Step 2: Edit questions.md
+# - Review generated questions
+# - Fill in your answers
+# - Check boxes [x] for completed questions
+
+# Step 3: Accept learning results
+python kit.py --accept-learn
+
+# The system will:
+# - Incorporate your answers into OVERVIEW.md
+# - Archive completed questions
+# - Check if more learning is needed
+# - Optionally proceed to project execution
+```
+
+### Question Types & Research
+
+**Question Priorities:**
+- **Critical**: Must-have requirements that block development
+- **MVP**: Important features for initial version
+- **Future**: Nice-to-have features for later iterations
+
+**Research Methods:**
+- **Knowledge Base**: Built-in answers for common project questions
+- **Ollama Integration**: Local LLM research using Mistral or other models
+- **Interactive Prompts**: Voice alerts + CLI prompts for user input
+- **Web Research**: Future enhancement for external knowledge
+
+### Example Learning Session
+
+```
+🎓 Starting Interactive Learning Phase
+
+Learning Iteration 1/5
+✓ Generated 8 questions (3 critical)
+✓ Researched 5 questions
+
+📝 Questions ready for review!
+Please review and edit: questions.md
+Add your answers and check boxes [x] when complete
+
+Run `python kit.py --accept-learn` when ready to continue
+```
+
+### Sample Generated Questions
+
+```markdown
+### [Critical] Question: What authentication method should be used?
+
+**Why**: Security and user management are fundamental to application design
+
+**Suggested Answer**: JWT tokens with refresh tokens for stateless authentication *(Confidence: 80%)*
+
+**Your Answer**: [ ] We'll use Firebase Auth for social login integration
+
+---
+
+### [MVP] Question: What database will store user data?
+
+**Why**: Data storage decisions affect performance and scalability
+
+**Suggested Answer**: PostgreSQL for complex queries, MongoDB for document storage *(Confidence: 75%)*
+
+**Your Answer**: [x] PostgreSQL with Redis for session storage
+```
+
 ## 🏗️ Architecture
 
 ### Core Components
@@ -109,6 +209,8 @@ result = await workflow_manager.execute_workflow(project.dict())
    - **Coder Agent**: Generates code using AI models
    - **Tester Agent**: Executes tests and validates outputs
    - **Advisor Agent**: Provides code review and improvement suggestions
+   - **Project Manager Agent**: Analyzes projects and generates learning questions (o3-powered)
+   - **Research Agent**: Researches answers using knowledge base and Ollama
 
 2. **Workflow System** (`workflows/`): LangGraph-based orchestration
    - **Project Builder**: Main workflow execution engine

@@ -35,6 +35,10 @@ class AgentType(str, Enum):
     TESTER = "tester"
     ADVISOR = "advisor"
     ORCHESTRATOR = "orchestrator"
+    DOCUMENTATION = "documentation"
+    TESTING_VALIDATION = "testing_validation"
+    VISUAL_TESTING = "visual_testing"
+    BUG_BOUNTY = "bug_bounty"
 
 
 class ProjectTask(BaseModel):
@@ -60,8 +64,8 @@ class ProjectTask(BaseModel):
     
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     title: str = Field(..., min_length=1, max_length=200)
-    description: str = Field(..., min_length=1, max_length=2000)
-    type: str = Field(..., pattern=r"^(CREATE|MODIFY|TEST|VALIDATE)$")
+    description: str = Field(..., min_length=1, max_length=10000)
+    type: str = Field(..., pattern=r"^(CREATE|MODIFY|TEST|VALIDATE|PARSE)$")
     status: TaskStatus = TaskStatus.PENDING
     confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     agent_type: AgentType

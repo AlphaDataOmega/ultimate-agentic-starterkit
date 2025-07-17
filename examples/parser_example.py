@@ -11,12 +11,12 @@ import sys
 import os
 from pathlib import Path
 
-# Add StarterKit to Python path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'StarterKit'))
+# Add parent directory to Python path  
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from StarterKit.agents.parser_agent import ParserAgent
-from StarterKit.core.models import ProjectTask, AgentType, create_project_task
-from StarterKit.core.logger import get_logger
+from agents.parser_agent import ParserAgent
+from core.models import ProjectTask, AgentType, create_project_task
+from core.logger import get_logger
 
 # Setup logging
 logger = get_logger("parser_example")

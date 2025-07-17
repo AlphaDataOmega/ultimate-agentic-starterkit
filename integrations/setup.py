@@ -12,9 +12,9 @@ from pathlib import Path
 from typing import Dict, Any
 from datetime import datetime
 
-from ..core.logger import get_logger
-from ..core.config import get_config
-from ..core.voice_alerts import get_voice_alerts
+from core.logger import get_logger
+from core.config import get_config
+from core.voice_alerts import get_voice_alerts
 from .factory import get_integration_factory, IntegrationType
 
 

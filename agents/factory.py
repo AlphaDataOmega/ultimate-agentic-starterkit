@@ -18,6 +18,12 @@ from agents.parser_agent import ParserAgent
 from agents.coder_agent import CoderAgent
 from agents.tester_agent import TesterAgent
 from agents.advisor_agent import AdvisorAgent
+from agents.project_manager_agent import ProjectManagerAgent
+from agents.research_agent import ResearchAgent
+from agents.documentation_agent import DocumentationAgent
+from agents.testing_validation_agent import TestingValidationAgent
+from agents.visual_testing_agent import VisualTestingAgent
+from agents.bug_bounty_agent import BugBountyAgent
 from core.models import AgentType, ProjectTask, AgentResult
 from core.config import get_config
 from core.logger import get_logger
@@ -388,6 +394,30 @@ class AgentFactory:
                 'temperature': 0.3,
                 'max_retries': 2,
                 'timeout': 900
+            },
+            AgentType.DOCUMENTATION: {
+                'supported_formats': ['.md', '.rst', '.txt'],
+                'max_retries': 2,
+                'timeout': 1200  # 20 minutes - enough for complex documentation updates
+            },
+            AgentType.TESTING_VALIDATION: {
+                'max_retries': 5,
+                'retry_delay_base': 2.0,
+                'retry_delay_max': 60.0,
+                'timeout': 2400  # 40 minutes - enough for comprehensive test suites
+            },
+            AgentType.VISUAL_TESTING: {
+                'screenshot_timeout': 60,    # Increased from 30s
+                'page_load_timeout': 30,     # Increased from 10s  
+                'supported_browsers': ['chrome', 'firefox'],
+                'max_retries': 3,
+                'timeout': 1800  # 30 minutes - enough for app startup + AI vision analysis
+            },
+            AgentType.BUG_BOUNTY: {
+                'max_debugging_depth': 10,
+                'analysis_timeout': 1800,
+                'max_retries': 1,
+                'timeout': 3600  # 60 minutes - increased for thorough debugging
             }
         }
         
@@ -396,7 +426,13 @@ class AgentFactory:
             AgentType.PARSER: ParserAgent,
             AgentType.CODER: CoderAgent,
             AgentType.TESTER: TesterAgent,
-            AgentType.ADVISOR: AdvisorAgent
+            AgentType.ADVISOR: AdvisorAgent,
+            AgentType.DOCUMENTATION: DocumentationAgent,
+            AgentType.TESTING_VALIDATION: TestingValidationAgent,
+            AgentType.VISUAL_TESTING: VisualTestingAgent,
+            AgentType.BUG_BOUNTY: BugBountyAgent,
+            "project_manager": ProjectManagerAgent,
+            "research": ResearchAgent
         }
     
     def create_agent(self, agent_type: AgentType, 
