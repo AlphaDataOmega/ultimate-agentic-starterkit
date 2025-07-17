@@ -38,7 +38,7 @@ class TestingValidationAgent(BaseAgent):
         """Initialize the Testing Validation Agent."""
         super().__init__("testing_validation", config)
         self.system_config = get_config()
-        self.knowledge_base = ProjectKnowledgeBase(".")
+        self.knowledge_base = ProjectKnowledgeBase(".", project_name=self.config.get('project_name', None))
         
         # Testing framework detection
         self.supported_frameworks = {

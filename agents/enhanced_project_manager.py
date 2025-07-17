@@ -28,7 +28,7 @@ class EnhancedProjectManager(BaseAgent):
         """Initialize the Enhanced Project Manager."""
         super().__init__("enhanced_project_manager", config)
         
-        self.knowledge_base = ProjectKnowledgeBase()
+        self.knowledge_base = ProjectKnowledgeBase(project_name=self.config.get('project_name', None))
         self.work_order_manager = WorkOrderManager()
         
         # Document generation priorities
@@ -118,7 +118,7 @@ class EnhancedProjectManager(BaseAgent):
                 execution_time=0.0
             )
             
-            self.logger.info(f"Enhanced project management completed: {len(work_order_ids)} work orders created")
+            self.logger.info(f"Enhanced project management completed successfully")
             return result
             
         except Exception as e:
@@ -126,6 +126,12 @@ class EnhancedProjectManager(BaseAgent):
             return AgentResult(
                 agent_id=self.agent_id,
                 success=False,
+                output={
+                    'interactive_learning_completed': False,
+                    'error': str(e),
+                    'project_type': None,
+                    'ready_for_incremental_execution': False
+                },
                 error=str(e),
                 confidence=0.0,
                 execution_time=0.0
@@ -720,46 +726,58 @@ class EnhancedProjectManager(BaseAgent):
             print(f"Question {i}/{len(questions)}: {question['question']}")
             
             if question["type"] == "yes_no":
-                while True:
-                    response = input(f"  [y/n] (default: {'y' if question['default'] else 'n'}): ").strip().lower()
-                    if response == "":
-                        responses[question["id"]] = question["default"]
-                        break
-                    elif response in ["y", "yes"]:
-                        responses[question["id"]] = True
-                        break
-                    elif response in ["n", "no"]:
-                        responses[question["id"]] = False
-                        break
-                    else:
-                        print("  Please enter 'y' for yes or 'n' for no.")
+                try:
+                    while True:
+                        response = input(f"  [y/n] (default: {'y' if question['default'] else 'n'}): ").strip().lower()
+                        if response == "":
+                            responses[question["id"]] = question["default"]
+                            break
+                        elif response in ["y", "yes"]:
+                            responses[question["id"]] = True
+                            break
+                        elif response in ["n", "no"]:
+                            responses[question["id"]] = False
+                            break
+                        else:
+                            print("  Please enter 'y' for yes or 'n' for no.")
+                except EOFError:
+                    print(f"  Using default: {'y' if question['default'] else 'n'}")
+                    responses[question["id"]] = question["default"]
             
             elif question["type"] == "choice":
                 print("  Choices:")
                 for j, choice in enumerate(question["choices"], 1):
                     print(f"    {j}. {choice}")
                 
-                while True:
-                    response = input(f"  Enter choice number (1-{len(question['choices'])}) or press Enter for default: ").strip()
-                    if response == "":
-                        responses[question["id"]] = question["default"]
-                        break
-                    try:
-                        choice_index = int(response) - 1
-                        if 0 <= choice_index < len(question["choices"]):
-                            responses[question["id"]] = question["choices"][choice_index]
+                try:
+                    while True:
+                        response = input(f"  Enter choice number (1-{len(question['choices'])}) or press Enter for default: ").strip()
+                        if response == "":
+                            responses[question["id"]] = question["default"]
                             break
-                        else:
-                            print(f"  Please enter a number between 1 and {len(question['choices'])}")
-                    except ValueError:
-                        print("  Please enter a valid number")
+                        try:
+                            choice_index = int(response) - 1
+                            if 0 <= choice_index < len(question["choices"]):
+                                responses[question["id"]] = question["choices"][choice_index]
+                                break
+                            else:
+                                print(f"  Please enter a number between 1 and {len(question['choices'])}")
+                        except ValueError:
+                            print("  Please enter a valid number")
+                except EOFError:
+                    print(f"  Using default: {question['default']}")
+                    responses[question["id"]] = question["default"]
             
             elif question["type"] == "text":
-                response = input(f"  Enter your answer (default: {question['default']}): ").strip()
-                if response == "":
+                try:
+                    response = input(f"  Enter your answer (default: {question['default']}): ").strip()
+                    if response == "":
+                        responses[question["id"]] = question["default"]
+                    else:
+                        responses[question["id"]] = response
+                except EOFError:
+                    print(f"  Using default: {question['default']}")
                     responses[question["id"]] = question["default"]
-                else:
-                    responses[question["id"]] = response
             
             print()
         

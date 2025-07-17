@@ -35,21 +35,23 @@ class ClaudeCodeExecutor:
         self.max_context_size = 200000  # Claude's large context window
         
     async def execute_coding_work_order(self, work_order: Dict[str, Any], 
-                                      context: Dict[str, Any]) -> Dict[str, Any]:
+                                      context: Dict[str, Any],
+                                      prp: Dict[str, Any] = None) -> Dict[str, Any]:
         """
         Execute a coding work order using Claude Code/SDK.
         
         Args:
             work_order: Work order specification
             context: Full project context including all documents and history
+            prp: Comprehensive PRP (Project Requirements Package) with codebase analysis
             
         Returns:
             Execution result with generated files and artifacts
         """
         self.logger.info(f"Executing coding work order via Claude: {work_order['id']}")
         
-        # Prepare comprehensive context for Claude
-        claude_context = await self._prepare_claude_context(work_order, context)
+        # Prepare comprehensive context for Claude (with PRP if available)
+        claude_context = await self._prepare_claude_context(work_order, context, prp)
         
         # Create coding prompt with full context
         coding_prompt = self._create_coding_prompt(work_order, claude_context)
@@ -65,8 +67,9 @@ class ClaudeCodeExecutor:
         return result
     
     async def _prepare_claude_context(self, work_order: Dict[str, Any], 
-                                    context: Dict[str, Any]) -> Dict[str, Any]:
-        """Prepare comprehensive context for Claude with full project knowledge."""
+                                    context: Dict[str, Any],
+                                    prp: Dict[str, Any] = None) -> Dict[str, Any]:
+        """Prepare comprehensive context for Claude with full project knowledge and PRP."""
         
         claude_context = {
             "work_order": work_order,
@@ -97,6 +100,24 @@ class ClaudeCodeExecutor:
         # Get current file structure
         file_structure = await self._get_file_structure()
         claude_context["file_structure"] = file_structure
+        
+        # Add comprehensive PRP context if available
+        if prp and prp.get('prp_version') == '2.0':
+            self.logger.info("Adding comprehensive PRP context to Claude execution")
+            claude_context["prp_analysis"] = {
+                "codebase_analysis": prp.get('codebase_analysis', {}),
+                "completion_history": prp.get('completion_history', {}),
+                "implementation_guidance": prp.get('implementation_guidance', {}),
+                "project_context": prp.get('project_context', {}),
+                "comprehensive_context": prp.get('comprehensive_context', ''),
+                "research_method": prp.get('research_method', 'none')
+            }
+        elif prp and prp.get('error'):
+            self.logger.warning(f"PRP generation failed: {prp['error']}")
+            claude_context["prp_analysis"] = {
+                "error": prp['error'],
+                "fallback_context": prp.get('fallback_context', {})
+            }
         
         return claude_context
     

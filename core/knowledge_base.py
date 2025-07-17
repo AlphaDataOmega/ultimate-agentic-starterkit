@@ -60,20 +60,28 @@ class ProjectKnowledgeBase:
     and progressive work order tracking.
     """
     
-    def __init__(self, project_root: str = "."):
+    def __init__(self, project_root: str = ".", project_name: str = None):
         """Initialize the knowledge base."""
         self.project_root = Path(project_root)
+        self.project_name = project_name
         self.logger = get_logger("knowledge_base")
         self.config = get_config()
         
-        # Knowledge base structure
-        self.docs_dir = self.project_root / "docs"
-        self.work_orders_dir = self.project_root / "work_orders"
-        self.completions_dir = self.project_root / "completions"
+        # Knowledge base structure - use workspace/[project_name]/docs if project_name provided
+        if project_name:
+            project_workspace = self.project_root / "workspace" / project_name
+            self.docs_dir = project_workspace / "docs"
+            self.work_orders_dir = self.project_root / "work_orders"
+            self.completions_dir = self.project_root / "completions"
+        else:
+            # Fallback to root docs for backward compatibility
+            self.docs_dir = self.project_root / "docs"
+            self.work_orders_dir = self.project_root / "work_orders"
+            self.completions_dir = self.project_root / "completions"
         
         # Create directories
         for dir_path in [self.docs_dir, self.work_orders_dir, self.completions_dir]:
-            dir_path.mkdir(exist_ok=True)
+            dir_path.mkdir(parents=True, exist_ok=True)
         
         # Document templates dictionary removed - using AI generation instead
         
@@ -258,71 +266,52 @@ class ProjectKnowledgeBase:
     async def _ai_generate_document_content(self, doc_type: DocumentType, project_type: ProjectType, project_context: Dict[str, Any]) -> str:
         """Generate document content using AI based on project context."""
         
-        # Build comprehensive context for AI generation
-        context_summary = self._build_generation_context(project_context)
-        
-        # Create generation prompt
-        generation_prompt = f"""
-# Document Generation Task
-
-## Document Type: {doc_type.value}
-## Project Type: {project_type}
-
-## Project Context
-{context_summary}
-
-## Task
+        try:
+            from integrations.ollama_client import OllamaClient
+            
+            # Build comprehensive context for AI generation
+            context_summary = self._build_generation_context(project_context)
+            
+            # Create generation prompt  
+            generation_prompt = f"""
 Generate a comprehensive {doc_type.value} document specifically tailored for this {project_type} project.
 
-## Requirements
-1. **Be specific to this project** - Use the actual project details provided
-2. **Match project complexity** - Simple projects get simple docs, complex projects get detailed docs
-3. **Include relevant sections only** - Don't add unnecessary sections for this project type
-4. **Use markdown format** - Well-structured with headers, lists, and code blocks where appropriate
-5. **Be actionable** - Include specific, implementable details
+Project Context:
+{context_summary[:2000]}  # Truncate context to keep prompt manageable
 
-## Document Purpose
-- **CONTEXT.md**: Working assumptions and project context
-- **REQUIREMENTS.md**: Functional and technical requirements
-- **ARCHITECTURE.md**: System design and technical decisions
-- **USER_STORIES.md**: User stories and acceptance criteria
-- **DATA_MODELS.md**: Data structures and relationships
-- **API_SPEC.md**: API endpoints and specifications
-- **SECURITY.md**: Security requirements and implementation
-- **DEPLOYMENT.md**: Deployment strategy and infrastructure
-- **BUSINESS_RULES.md**: Business logic and domain rules
+Requirements:
+1. Be specific to this project - Use the actual project details provided
+2. Match project complexity - Simple projects get simple docs, complex projects get detailed docs
+3. Include relevant sections only - Don't add unnecessary sections for this project type
+4. Use markdown format - Well-structured with headers, lists, and code blocks where appropriate
+5. Be actionable - Include specific, implementable details
 
-## Response Format
+Document Purpose:
+- CONTEXT.md: Working assumptions and project context
+- REQUIREMENTS.md: Functional and technical requirements
+- ARCHITECTURE.md: System design and technical decisions
+- USER_STORIES.md: User stories and acceptance criteria
+
+Response Format:
 Provide only the markdown content for the document, no additional text or explanations.
 """
-        
-        # Use enhanced project manager for generation
-        from agents.enhanced_project_manager import EnhancedProjectManager
-        from core.models import ProjectTask, AgentType
-        
-        pm = EnhancedProjectManager()
-        generation_task = ProjectTask(
-            id="document-generation",
-            title=f"Generate {doc_type.value}",
-            description=generation_prompt,
-            type="CREATE",
-            agent_type=AgentType.ADVISOR
-        )
-        
-        try:
-            result = await pm.execute(generation_task)
             
-            if result.success:
-                # Extract generated content
-                generated_content = result.output.get("document_content", "")
-                
-                if generated_content:
-                    return generated_content
-                else:
-                    self.logger.warning(f"AI generation produced empty content for {doc_type.value}")
-                    return ""
+            client = OllamaClient()
+            result = await client.generate_response(
+                model="llama3.2:latest",  # Use a default model
+                prompt=generation_prompt
+            )
+            
+            if result.get("success", False):
+                document_content = result.get("response", "")
             else:
-                self.logger.error(f"AI document generation failed: {result.error}")
+                document_content = ""
+            
+            if document_content:
+                self.logger.info(f"Generated AI document content for {doc_type.value}")
+                return document_content
+            else:
+                self.logger.warning(f"AI generation produced empty content for {doc_type.value}")
                 return ""
         
         except Exception as e:
@@ -332,6 +321,20 @@ Provide only the markdown content for the document, no additional text or explan
     def _build_generation_context(self, project_context: Dict[str, Any]) -> str:
         """Build comprehensive context for AI document generation."""
         context_parts = []
+        
+        # Add project metadata
+        project_type = project_context.get("project_type", "unknown")
+        complexity = project_context.get("complexity", "medium")
+        features = project_context.get("features", [])
+        tech_stack = project_context.get("tech_stack", [])
+        
+        context_parts.append(f"**Project Metadata**:")
+        context_parts.append(f"- Type: {project_type}")
+        context_parts.append(f"- Complexity: {complexity}")
+        if features:
+            context_parts.append(f"- Features: {', '.join(features)}")
+        if tech_stack:
+            context_parts.append(f"- Technology Stack: {', '.join(tech_stack)}")
         
         # Add project overview
         overview = project_context.get("overview_content", "")
@@ -349,6 +352,41 @@ Provide only the markdown content for the document, no additional text or explan
             context_parts.append("**User Clarifications**:")
             for key, value in user_responses.items():
                 context_parts.append(f"- {key}: {value}")
+        
+        # Add project-specific requirements
+        requirements = project_context.get("requirements", [])
+        if requirements:
+            context_parts.append("**Specific Requirements**:")
+            for req in requirements:
+                context_parts.append(f"- {req}")
+        
+        # Add architectural decisions
+        architecture = project_context.get("architecture", {})
+        if architecture:
+            context_parts.append("**Architecture Decisions**:")
+            for key, value in architecture.items():
+                context_parts.append(f"- {key}: {value}")
+        
+        # Add game-specific details for game projects
+        if project_type.lower() == "game":
+            game_details = self._extract_game_specific_details(project_context)
+            if game_details:
+                context_parts.append("**Game-Specific Details**:")
+                context_parts.extend(game_details)
+        
+        # Add web app specific details for web projects
+        if project_type.lower() in ["web_app", "webapp"]:
+            web_details = self._extract_web_specific_details(project_context)
+            if web_details:
+                context_parts.append("**Web Application Details**:")
+                context_parts.extend(web_details)
+        
+        # Add API specific details for API projects
+        if project_type.lower() in ["api", "api_service"]:
+            api_details = self._extract_api_specific_details(project_context)
+            if api_details:
+                context_parts.append("**API Service Details**:")
+                context_parts.extend(api_details)
         
         # Add existing documents for context
         existing_docs = project_context.get("documents", {})
@@ -369,11 +407,228 @@ Provide only the markdown content for the document, no additional text or explan
         
         return "\n\n".join(context_parts) if context_parts else "No additional context available"
     
+    def _extract_game_specific_details(self, project_context: Dict[str, Any]) -> List[str]:
+        """Extract game-specific details from project context."""
+        details = []
+        
+        # Extract game genre and mechanics
+        overview = project_context.get("overview_content", "").lower()
+        if "pong" in overview:
+            details.append("- Game Genre: Classic Arcade")
+            details.append("- Game Mechanics: Paddle movement, ball physics, collision detection")
+            details.append("- Player Controls: Keyboard input for paddle movement")
+            details.append("- Game Objectives: First to reach score limit wins")
+        elif "puzzle" in overview:
+            details.append("- Game Genre: Puzzle")
+            details.append("- Game Mechanics: Logic-based challenges, problem solving")
+        elif "rpg" in overview:
+            details.append("- Game Genre: Role-Playing Game")
+            details.append("- Game Mechanics: Character progression, inventory, quest system")
+        elif "strategy" in overview:
+            details.append("- Game Genre: Strategy")
+            details.append("- Game Mechanics: Resource management, tactical decisions")
+        
+        # Extract rendering and graphics details
+        if "pygame" in str(project_context.get("tech_stack", [])).lower():
+            details.append("- Graphics: Pygame-based 2D rendering")
+            details.append("- Display: Real-time game loop with frame updates")
+        
+        # Extract gameplay features
+        if "multiplayer" in overview:
+            details.append("- Multiplayer: Multiple player support")
+        if "ai" in overview:
+            details.append("- AI: Computer-controlled opponents")
+        if "score" in overview:
+            details.append("- Scoring System: Points-based gameplay")
+        
+        return details
+    
+    def _extract_web_specific_details(self, project_context: Dict[str, Any]) -> List[str]:
+        """Extract web application specific details from project context."""
+        details = []
+        
+        overview = project_context.get("overview_content", "").lower()
+        tech_stack = project_context.get("tech_stack", [])
+        
+        # Extract frontend framework
+        if "react" in str(tech_stack).lower() or "react" in overview:
+            details.append("- Frontend Framework: React.js")
+        elif "vue" in str(tech_stack).lower() or "vue" in overview:
+            details.append("- Frontend Framework: Vue.js")
+        elif "angular" in str(tech_stack).lower() or "angular" in overview:
+            details.append("- Frontend Framework: Angular")
+        
+        # Extract backend framework
+        if "flask" in str(tech_stack).lower() or "flask" in overview:
+            details.append("- Backend Framework: Flask")
+        elif "django" in str(tech_stack).lower() or "django" in overview:
+            details.append("- Backend Framework: Django")
+        elif "fastapi" in str(tech_stack).lower() or "fastapi" in overview:
+            details.append("- Backend Framework: FastAPI")
+        
+        # Extract database information
+        if "postgresql" in overview or "postgres" in overview:
+            details.append("- Database: PostgreSQL")
+        elif "mysql" in overview:
+            details.append("- Database: MySQL")
+        elif "mongodb" in overview:
+            details.append("- Database: MongoDB")
+        elif "sqlite" in overview:
+            details.append("- Database: SQLite")
+        
+        # Extract deployment and hosting details
+        if "docker" in overview:
+            details.append("- Deployment: Docker containerization")
+        if "aws" in overview:
+            details.append("- Hosting: AWS")
+        elif "heroku" in overview:
+            details.append("- Hosting: Heroku")
+        elif "vercel" in overview:
+            details.append("- Hosting: Vercel")
+        
+        # Extract authentication details
+        if "auth" in overview or "login" in overview:
+            details.append("- Authentication: User login/registration system")
+        if "jwt" in overview:
+            details.append("- Auth Method: JWT tokens")
+        if "oauth" in overview:
+            details.append("- Auth Method: OAuth integration")
+        
+        return details
+    
+    def _extract_api_specific_details(self, project_context: Dict[str, Any]) -> List[str]:
+        """Extract API service specific details from project context."""
+        details = []
+        
+        overview = project_context.get("overview_content", "").lower()
+        tech_stack = project_context.get("tech_stack", [])
+        
+        # Extract API framework
+        if "fastapi" in str(tech_stack).lower() or "fastapi" in overview:
+            details.append("- API Framework: FastAPI")
+        elif "flask" in str(tech_stack).lower() or "flask" in overview:
+            details.append("- API Framework: Flask")
+        elif "django" in str(tech_stack).lower() or "django" in overview:
+            details.append("- API Framework: Django REST Framework")
+        elif "express" in str(tech_stack).lower() or "express" in overview:
+            details.append("- API Framework: Express.js")
+        
+        # Extract API type
+        if "rest" in overview:
+            details.append("- API Type: RESTful API")
+        elif "graphql" in overview:
+            details.append("- API Type: GraphQL API")
+        
+        # Extract authentication
+        if "api key" in overview:
+            details.append("- Authentication: API Key")
+        elif "jwt" in overview:
+            details.append("- Authentication: JWT tokens")
+        elif "oauth" in overview:
+            details.append("- Authentication: OAuth 2.0")
+        
+        # Extract data formats
+        if "json" in overview:
+            details.append("- Data Format: JSON")
+        elif "xml" in overview:
+            details.append("- Data Format: XML")
+        
+        # Extract rate limiting
+        if "rate limit" in overview:
+            details.append("- Rate Limiting: Request throttling implemented")
+        
+        return details
+    
     def _get_project_specific_template(self, doc_type: DocumentType, project_type: ProjectType) -> str:
         """Get project-type-specific template content."""
-        # All static templates have been removed in favor of AI generation
-        # This method now returns empty string as fallback for all project types
-        return ""
+        # Basic fallback templates when AI generation fails
+        
+        if doc_type == DocumentType.CONTEXT:
+            return f"""# Project Context
+
+## Working Assumptions
+- This is a {project_type} project
+- Standard development practices apply
+- Testing will be implemented
+- Documentation will be maintained
+
+## Technical Environment
+- Development environment: Local development
+- Target environment: Production ready
+- Dependencies: As specified in requirements
+
+## Project Scope
+- Primary focus: Core functionality
+- Secondary focus: Testing and documentation
+- Future enhancements: To be determined
+
+## Success Criteria
+- All requirements implemented
+- Tests passing
+- Documentation complete
+"""
+        
+        elif doc_type == DocumentType.REQUIREMENTS:
+            return f"""# Requirements
+
+## Functional Requirements
+- Core features as specified in project overview
+- User interface requirements
+- Performance requirements
+
+## Non-Functional Requirements
+- Reliability and stability
+- Performance optimization
+- Code quality standards
+
+## Technical Requirements
+- {project_type} specific implementation
+- Testing coverage requirements
+- Documentation standards
+"""
+        
+        elif doc_type == DocumentType.ARCHITECTURE:
+            return f"""# Architecture
+
+## System Overview
+- {project_type} architecture
+- Component organization
+- Technology stack
+
+## Technical Decisions
+- Framework selection
+- Architecture patterns
+- Implementation approach
+
+## Development Guidelines
+- Code organization
+- Testing strategy
+- Deployment approach
+"""
+        
+        elif doc_type == DocumentType.USER_STORIES:
+            return f"""# User Stories
+
+## Primary User Stories
+- As a user, I want to use the {project_type} functionality
+- As a user, I want the system to be reliable
+- As a user, I want clear documentation
+
+## Acceptance Criteria
+- All features work as expected
+- Performance meets requirements
+- Documentation is complete
+"""
+        
+        else:
+            return f"""# {doc_type.value.replace('.md', '')}
+
+## Overview
+This is a {project_type} project document.
+
+## Details
+To be filled in based on project requirements.
+"""
     
     async def get_project_context(self, work_order_id: Optional[str] = None) -> Dict[str, Any]:
         """Get comprehensive project context for work order execution."""
@@ -614,45 +869,266 @@ Provide only the markdown content for the document, no additional text or explan
     # AI-Enhanced Features (Future Automation Opportunities)
     # Templates are now only used as fallbacks - AI generates most content
     
-    async def _ai_generate_test_strategy(self, project_context: Dict[str, Any]) -> Dict[str, Any]:
-        """Generate AI-driven test strategy based on project complexity and type."""
-        # TODO: Implement AI-driven test strategy generation
-        # - Analyze code complexity
-        # - Determine appropriate testing levels
-        # - Generate test plans
-        pass
     
     async def _ai_code_review(self, code_content: str) -> Dict[str, Any]:
         """AI-powered code review for quality, security, and performance."""
-        # TODO: Implement AI code review
-        # - Analyze code for best practices
-        # - Check security vulnerabilities
-        # - Suggest performance improvements
-        pass
+        from integrations.ollama_client import OllamaClient
+        
+        try:
+            client = OllamaClient()
+            
+            # Limit code content to prevent overwhelming the AI
+            if len(code_content) > 5000:
+                code_content = code_content[:5000] + "\n... [truncated for review]"
+            
+            prompt = f"""
+            Review the following code for quality, security, and performance issues:
+            
+            ```
+            {code_content}
+            ```
+            
+            Please provide feedback on:
+            1. Code quality and best practices
+            2. Security vulnerabilities
+            3. Performance improvements
+            4. Maintainability concerns
+            
+            Format your response as constructive feedback with specific suggestions.
+            """
+            
+            response = await client.generate_response(
+                model="llama3.2:latest",
+                prompt=prompt
+            )
+            
+            if response.get("success", False):
+                return {
+                    "review_result": response.get("response", ""),
+                    "success": True,
+                    "timestamp": datetime.now().isoformat()
+                }
+            else:
+                return {
+                    "review_result": "Code review failed - AI service unavailable",
+                    "success": False,
+                    "error": response.get("error", "Unknown error")
+                }
+                
+        except Exception as e:
+            self.logger.error(f"AI code review failed: {e}")
+            return {
+                "review_result": "Code review failed due to technical error",
+                "success": False,
+                "error": str(e)
+            }
     
     async def _ai_deployment_strategy(self, project_context: Dict[str, Any]) -> Dict[str, Any]:
         """Generate AI-driven deployment strategy based on project requirements."""
-        # TODO: Implement AI deployment strategy
-        # - Analyze project requirements
-        # - Suggest optimal deployment configuration
-        # - Generate environment-specific settings
-        pass
+        from integrations.ollama_client import OllamaClient
+        
+        try:
+            client = OllamaClient()
+            
+            project_type = project_context.get('project_type', 'unknown')
+            features = project_context.get('features', [])
+            tech_stack = project_context.get('tech_stack', [])
+            complexity = project_context.get('complexity', 'medium')
+            
+            prompt = f"""
+            Generate a deployment strategy for a {project_type} project with these characteristics:
+            
+            Project Type: {project_type}
+            Complexity: {complexity}
+            Features: {', '.join(features) if features else 'Standard features'}
+            Technology Stack: {', '.join(tech_stack) if tech_stack else 'Standard stack'}
+            
+            Please provide a comprehensive deployment strategy including:
+            
+            1. **Deployment Architecture**:
+               - Recommended hosting platform
+               - Infrastructure requirements
+               - Scalability considerations
+            
+            2. **Environment Configuration**:
+               - Development environment setup
+               - Staging environment configuration
+               - Production environment requirements
+            
+            3. **CI/CD Pipeline**:
+               - Build process automation
+               - Testing integration
+               - Deployment automation
+            
+            4. **Monitoring & Maintenance**:
+               - Performance monitoring
+               - Error tracking
+               - Update strategies
+            
+            Focus on practical, implementable recommendations for this project type.
+            """
+            
+            response = await client.generate_response(
+                model="llama3.2:latest",
+                prompt=prompt
+            )
+            
+            if response.get("success", False):
+                return {
+                    "deployment_strategy": response.get("response", ""),
+                    "success": True,
+                    "timestamp": datetime.now().isoformat()
+                }
+            else:
+                return {
+                    "deployment_strategy": "Standard deployment strategy recommended",
+                    "success": False,
+                    "error": response.get("error", "Unknown error")
+                }
+                
+        except Exception as e:
+            self.logger.error(f"AI deployment strategy failed: {e}")
+            return {
+                "deployment_strategy": "Standard deployment strategy recommended",
+                "success": False,
+                "error": str(e)
+            }
     
     async def _ai_error_recovery(self, error_context: Dict[str, Any]) -> Dict[str, Any]:
         """AI-based error recovery and self-healing suggestions."""
-        # TODO: Implement AI error recovery
-        # - Analyze failure patterns
-        # - Suggest intelligent recovery strategies
-        # - Learn from previous failures
-        pass
+        from integrations.ollama_client import OllamaClient
+        
+        try:
+            client = OllamaClient()
+            
+            error_type = error_context.get('error_type', 'unknown')
+            error_message = error_context.get('error_message', '')
+            stack_trace = error_context.get('stack_trace', '')
+            previous_failures = error_context.get('previous_failures', [])
+            
+            # Truncate long error messages
+            if len(error_message) > 1000:
+                error_message = error_message[:1000] + "... [truncated]"
+            if len(stack_trace) > 2000:
+                stack_trace = stack_trace[:2000] + "... [truncated]"
+            
+            prompt = f"""
+            Analyze the following error and suggest recovery strategies:
+            
+            Error Type: {error_type}
+            Error Message: {error_message}
+            Stack Trace: {stack_trace}
+            
+            Previous Failures: {len(previous_failures)} similar errors
+            
+            Please provide:
+            1. **Root Cause Analysis**: What likely caused this error?
+            2. **Immediate Recovery**: Quick fixes to restore functionality
+            3. **Long-term Solutions**: Prevent similar errors in the future
+            4. **Monitoring**: What to watch for to detect early warnings
+            
+            Focus on actionable, specific recommendations.
+            """
+            
+            response = await client.generate_response(
+                model="llama3.2:latest",
+                prompt=prompt
+            )
+            
+            if response.get("success", False):
+                return {
+                    "recovery_strategy": response.get("response", ""),
+                    "success": True,
+                    "timestamp": datetime.now().isoformat()
+                }
+            else:
+                return {
+                    "recovery_strategy": "Standard error recovery procedures recommended",
+                    "success": False,
+                    "error": response.get("error", "Unknown error")
+                }
+                
+        except Exception as e:
+            self.logger.error(f"AI error recovery failed: {e}")
+            return {
+                "recovery_strategy": "Standard error recovery procedures recommended",
+                "success": False,
+                "error": str(e)
+            }
     
     async def _ai_architecture_advisor(self, requirements: Dict[str, Any]) -> Dict[str, Any]:
         """AI-driven architecture recommendations based on requirements."""
-        # TODO: Implement AI architecture advisor
-        # - Analyze project requirements
-        # - Suggest optimal architecture patterns
-        # - Recommend technology stack
-        pass
+        from integrations.ollama_client import OllamaClient
+        
+        try:
+            client = OllamaClient()
+            
+            project_type = requirements.get('project_type', 'unknown')
+            features = requirements.get('features', [])
+            scale = requirements.get('scale', 'small')
+            performance_needs = requirements.get('performance_needs', 'standard')
+            budget = requirements.get('budget', 'medium')
+            
+            prompt = f"""
+            Provide architecture recommendations for a {project_type} project with these requirements:
+            
+            Project Type: {project_type}
+            Scale: {scale}
+            Performance Needs: {performance_needs}
+            Budget: {budget}
+            Required Features: {', '.join(features) if features else 'Standard features'}
+            
+            Please recommend:
+            
+            1. **Architecture Pattern**:
+               - Monolithic vs Microservices
+               - Recommended design patterns
+               - Scalability approach
+            
+            2. **Technology Stack**:
+               - Backend framework and language
+               - Database choices
+               - Frontend technology (if applicable)
+               - Infrastructure components
+            
+            3. **Data Architecture**:
+               - Database design approach
+               - Caching strategy
+               - Data flow patterns
+            
+            4. **Integration Strategy**:
+               - API design approach
+               - Third-party integrations
+               - Communication patterns
+            
+            Focus on practical, cost-effective recommendations that match the project scale.
+            """
+            
+            response = await client.generate_response(
+                model="llama3.2:latest",
+                prompt=prompt
+            )
+            
+            if response.get("success", False):
+                return {
+                    "architecture_recommendations": response.get("response", ""),
+                    "success": True,
+                    "timestamp": datetime.now().isoformat()
+                }
+            else:
+                return {
+                    "architecture_recommendations": "Standard architecture patterns recommended",
+                    "success": False,
+                    "error": response.get("error", "Unknown error")
+                }
+                
+        except Exception as e:
+            self.logger.error(f"AI architecture advisor failed: {e}")
+            return {
+                "architecture_recommendations": "Standard architecture patterns recommended",
+                "success": False,
+                "error": str(e)
+            }
     
     async def ai_generate_test_strategy(self, project_context: Dict[str, Any]) -> Dict[str, Any]:
         """

@@ -40,7 +40,7 @@ class BugBountyAgent(BaseAgent):
         """Initialize the Bug Bounty Agent."""
         super().__init__("bug_bounty", config)
         self.system_config = get_config()
-        self.knowledge_base = ProjectKnowledgeBase(".")
+        self.knowledge_base = ProjectKnowledgeBase(".", project_name=self.config.get('project_name', None))
         
         # Deep debugging configuration
         self.debugging_techniques = [

@@ -34,7 +34,7 @@ class DocumentationAgent(BaseAgent):
         """Initialize the Documentation Agent."""
         super().__init__("documentation", config)
         self.system_config = get_config()
-        self.knowledge_base = ProjectKnowledgeBase(".")
+        self.knowledge_base = ProjectKnowledgeBase(".", project_name=self.config.get('project_name', None))
         
         # Documentation configuration
         self.supported_formats = ['.md', '.rst', '.txt']
