@@ -79,26 +79,24 @@ class VoiceEngine:
     def _initialize_engine(self):
         """Initialize the TTS engine with error handling."""
         if not PYTTSX3_AVAILABLE:
-            self.logger.error("pyttsx3 not available - voice alerts disabled")
+            self.logger.debug("pyttsx3 not available - voice alerts disabled")
+            self.is_initialized = False
             return
         
         try:
-            self.engine = pyttsx3.init()
-            self.voices = self.engine.getProperty('voices')
+            # Try to initialize with minimal configuration
+            self.engine = pyttsx3.init(driverName=None, debug=False)
+            
+            # Don't try to configure voices - just use system defaults
+            self.voices = []
+            
+            # Mark as initialized - we'll handle errors during actual speech
             self.is_initialized = True
-            
-            # Log available voices
-            if self.voices:
-                voice_info = [{"id": i, "name": voice.name, "languages": getattr(voice, 'languages', [])} 
-                             for i, voice in enumerate(self.voices)]
-                self.logger.debug(f"Available voices: {voice_info}")
-            else:
-                self.logger.warning("No voices found on system")
-            
-            self.logger.info(f"Voice engine initialized on {self.platform}")
+            self.logger.info(f"Voice engine initialized on {self.platform} with system defaults")
             
         except Exception as e:
-            self.logger.error(f"Failed to initialize voice engine: {str(e)}")
+            # If TTS fails, continue without voice alerts - this is expected on many systems
+            self.logger.debug(f"Voice engine initialization failed (expected on headless systems): {str(e)}")
             self.last_error = str(e)
             self.is_initialized = False
     
@@ -138,6 +136,7 @@ class VoiceEngine:
             bool: True if speech was successful, False otherwise
         """
         if not self.is_initialized:
+            self.logger.debug(f"Voice not initialized - silently skipping: {text}")
             return False
         
         try:
@@ -427,7 +426,7 @@ class VoiceAlerts:
         test_message = "Voice alerts are working correctly"
         
         if not self.engine.is_initialized:
-            self.logger.error("Voice engine not initialized")
+            self.logger.info("Voice engine not initialized - voice alerts disabled (normal on headless systems)")
             return False
         
         success = self.engine.speak(test_message, block=True)
@@ -436,7 +435,7 @@ class VoiceAlerts:
             self.logger.info("Voice test completed successfully")
             self.last_message = test_message
         else:
-            self.logger.error("Voice test failed")
+            self.logger.debug("Voice test failed - continuing without voice alerts")
         
         return success
     

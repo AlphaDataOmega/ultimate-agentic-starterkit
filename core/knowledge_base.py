@@ -75,18 +75,7 @@ class ProjectKnowledgeBase:
         for dir_path in [self.docs_dir, self.work_orders_dir, self.completions_dir]:
             dir_path.mkdir(exist_ok=True)
         
-        # Document templates
-        self.document_templates = {
-            DocumentType.CONTEXT: self._get_context_template(),
-            DocumentType.REQUIREMENTS: self._get_requirements_template(),
-            DocumentType.ARCHITECTURE: self._get_architecture_template(),
-            DocumentType.USER_STORIES: self._get_user_stories_template(),
-            DocumentType.DATA_MODELS: self._get_data_models_template(),
-            DocumentType.API_SPEC: self._get_api_spec_template(),
-            DocumentType.SECURITY: self._get_security_template(),
-            DocumentType.DEPLOYMENT: self._get_deployment_template(),
-            DocumentType.BUSINESS_RULES: self._get_business_rules_template()
-        }
+        # Document templates dictionary removed - using AI generation instead
         
         # Work order tracking
         self.work_order_index = self._load_work_order_index()
@@ -133,447 +122,6 @@ class ProjectKnowledgeBase:
         # Default to web app if uncertain
         return ProjectType.WEB_APP
     
-    def _get_context_template(self) -> str:
-        """Get template for CONTEXT.md - working assumptions."""
-        return """# Project Context & Working Assumptions
-
-## Core Assumptions
-*These are fundamental truths that will be true when the project is built*
-
-### User Interaction Assumptions
-- [ ] Users can navigate using mouse/keyboard/touch
-- [ ] Users have basic computer literacy
-- [ ] Users understand common UI patterns (buttons, forms, menus)
-
-### Technical Environment Assumptions  
-- [ ] Target browsers support modern JavaScript (ES6+)
-- [ ] Users have stable internet connection for web apps
-- [ ] Server environment supports chosen technology stack
-- [ ] Database can handle expected concurrent users
-
-### Business Logic Assumptions
-- [ ] User authentication is required for protected features
-- [ ] Data validation happens on both client and server
-- [ ] Error states are handled gracefully
-- [ ] System maintains data consistency
-
-### Integration Assumptions
-- [ ] Third-party APIs are available and stable
-- [ ] Payment processing (if applicable) follows security standards
-- [ ] External services have documented APIs
-- [ ] Backup/recovery procedures are in place
-
-### Performance Assumptions
-- [ ] Response times under 200ms for critical operations
-- [ ] System can handle [X] concurrent users
-- [ ] Database queries are optimized
-- [ ] Caching strategies are implemented where needed
-
-### Security Assumptions
-- [ ] All user inputs are validated and sanitized
-- [ ] Authentication tokens are secure and time-limited
-- [ ] Sensitive data is encrypted in transit and at rest
-- [ ] Access controls are properly implemented
-
-## Project-Specific Context
-
-### Domain Knowledge
-*Add domain-specific assumptions here*
-
-### Integration Context  
-*External systems, APIs, services this project depends on*
-
-### User Personas & Behaviors
-*How users will interact with the system*
-
-### Success Metrics
-*How we'll know the project is working correctly*
-
----
-*This file is updated as work orders are completed and assumptions are validated*
-"""
-    
-    def _get_requirements_template(self) -> str:
-        """Get template for detailed functional requirements."""
-        return """# Detailed Requirements Specification
-
-## Functional Requirements
-
-### Core Features
-1. **Feature 1**: [Name]
-   - **Purpose**: What it does and why
-   - **Acceptance Criteria**: 
-     - [ ] Criterion 1
-     - [ ] Criterion 2
-   - **Edge Cases**: What could go wrong
-   - **Dependencies**: Other features this relies on
-
-### User Requirements
-- **User Role 1**: Can do X, Y, Z
-- **User Role 2**: Can do A, B, C
-
-### System Requirements
-- **Performance**: Response time, throughput, capacity
-- **Scalability**: Growth expectations
-- **Reliability**: Uptime, error rates
-- **Security**: Authentication, authorization, data protection
-
-### Integration Requirements
-- **External APIs**: What we need to integrate with
-- **Data Import/Export**: File formats, frequencies
-- **Third-party Services**: Payment, email, storage
-
-### Compliance Requirements
-- **Regulatory**: GDPR, HIPAA, PCI-DSS, etc.
-- **Accessibility**: WCAG guidelines
-- **Browser Support**: Which browsers/versions
-
----
-*Generated and refined through learning phase*
-"""
-    
-    def _get_architecture_template(self) -> str:
-        """Get template for system architecture."""
-        return """# System Architecture
-
-## Technology Stack
-- **Frontend**: Framework, libraries, build tools
-- **Backend**: Language, framework, database
-- **Infrastructure**: Hosting, CDN, monitoring
-- **DevOps**: CI/CD, testing, deployment
-
-## System Design
-
-### High-Level Architecture
-```
-[Frontend] ←→ [API Gateway] ←→ [Backend Services] ←→ [Database]
-```
-
-### Component Architecture
-- **Presentation Layer**: UI components, state management
-- **Business Logic Layer**: Services, domain models
-- **Data Access Layer**: Repositories, ORM
-- **Infrastructure Layer**: External APIs, file storage
-
-### Data Flow
-1. User interaction → Frontend
-2. API calls → Backend
-3. Business logic processing
-4. Database operations
-5. Response back to frontend
-
-### Security Architecture
-- **Authentication**: Method, token management
-- **Authorization**: Role-based access control
-- **Data Protection**: Encryption, validation
-
-### Deployment Architecture
-- **Environments**: Development, staging, production
-- **Scalability**: Load balancing, auto-scaling
-- **Monitoring**: Logging, metrics, alerting
-
----
-*Evolves as technical decisions are made during development*
-"""
-    
-    def _get_user_stories_template(self) -> str:
-        """Get template for detailed user stories."""
-        return """# User Stories & Acceptance Criteria
-
-## Epic 1: [Epic Name]
-
-### Story 1.1: [Story Name]
-**As a** [user type]
-**I want** [functionality]
-**So that** [benefit/value]
-
-**Acceptance Criteria:**
-- [ ] Given [context], when [action], then [result]
-- [ ] Given [context], when [action], then [result]
-
-**Definition of Done:**
-- [ ] Code written and reviewed
-- [ ] Unit tests passing
-- [ ] Integration tests passing
-- [ ] UI/UX review completed
-- [ ] Accessibility tested
-- [ ] Performance validated
-
-### Story 1.2: [Story Name]
-[Same format as above]
-
-## Edge Cases & Error Scenarios
-- **No network connection**: How system behaves
-- **Invalid user input**: Validation and feedback
-- **System overload**: Graceful degradation
-- **Data corruption**: Recovery procedures
-
-## User Journey Maps
-1. **New User Journey**: Registration → Setup → First use
-2. **Power User Journey**: Advanced features and workflows
-3. **Error Recovery Journey**: How users recover from problems
-
----
-*Stories refined as user needs become clearer*
-"""
-    
-    def _get_data_models_template(self) -> str:
-        """Get template for data models and schemas."""
-        return """# Data Models & Schema Design
-
-## Entity Relationship Diagram
-```
-[User] ──< [UserSession] >── [ActivityLog]
-   │
-   └──< [UserProfile]
-```
-
-## Core Entities
-
-### User
-```sql
-CREATE TABLE users (
-    id UUID PRIMARY KEY,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
-);
-```
-
-**Business Rules:**
-- Email must be unique and valid
-- Password must meet security requirements
-- Soft delete for data retention
-
-### [Other Entities]
-[Define each entity with schema and business rules]
-
-## Data Relationships
-- **One-to-Many**: User → Orders
-- **Many-to-Many**: Users ↔ Roles
-- **One-to-One**: User → Profile
-
-## Data Validation Rules
-- **Required Fields**: What cannot be null
-- **Format Validation**: Email, phone, dates
-- **Business Rules**: Age limits, quantity limits
-- **Referential Integrity**: Foreign key constraints
-
-## Data Migration Strategy
-- **Version Control**: How schema changes are managed
-- **Rollback Plan**: How to undo changes safely
-- **Seed Data**: Initial data for development/testing
-
----
-*Schema evolves as data requirements become clear*
-"""
-    
-    def _get_api_spec_template(self) -> str:
-        """Get template for API specification."""
-        return """# API Specification
-
-## Base URL
-- **Development**: `https://api-dev.example.com/v1`
-- **Production**: `https://api.example.com/v1`
-
-## Authentication
-```http
-Authorization: Bearer <jwt_token>
-```
-
-## Core Endpoints
-
-### User Management
-
-#### POST /auth/login
-**Purpose**: Authenticate user and return JWT token
-
-**Request:**
-```json
-{
-  "email": "user@example.com",
-  "password": "securepassword"
-}
-```
-
-**Response:**
-```json
-{
-  "token": "eyJhbGciOiJIUzI1NiIs...",
-  "user": {
-    "id": "uuid",
-    "email": "user@example.com",
-    "role": "user"
-  }
-}
-```
-
-**Error Responses:**
-- `400`: Invalid credentials
-- `429`: Too many login attempts
-
-### [Other Endpoint Categories]
-
-## Data Formats
-- **Dates**: ISO 8601 format (2023-12-01T10:30:00Z)
-- **IDs**: UUIDs for all entities
-- **Pagination**: Cursor-based with limit/offset
-
-## Error Handling
-```json
-{
-  "error": {
-    "code": "VALIDATION_ERROR",
-    "message": "Invalid email format",
-    "details": {
-      "field": "email",
-      "value": "invalid-email"
-    }
-  }
-}
-```
-
-## Rate Limiting
-- **Authenticated**: 1000 requests/hour
-- **Unauthenticated**: 100 requests/hour
-
----
-*API evolves as endpoints are implemented*
-"""
-    
-    def _get_security_template(self) -> str:
-        """Get template for security specifications."""
-        return """# Security Specification
-
-## Authentication Strategy
-- **Method**: JWT tokens with refresh tokens
-- **Session Management**: Stateless with token expiration
-- **Multi-factor Authentication**: TOTP for sensitive operations
-
-## Authorization Framework
-- **Role-Based Access Control (RBAC)**
-  - Admin: Full system access
-  - User: Limited to own data
-  - Guest: Read-only public data
-
-## Data Protection
-- **Encryption in Transit**: TLS 1.3 for all connections
-- **Encryption at Rest**: AES-256 for sensitive data
-- **Key Management**: Separate key service, rotation policy
-
-## Input Validation
-- **SQL Injection**: Parameterized queries only
-- **XSS Prevention**: Content Security Policy, input sanitization
-- **CSRF Protection**: Token-based validation
-
-## Security Headers
-```http
-Strict-Transport-Security: max-age=31536000; includeSubDomains
-Content-Security-Policy: default-src 'self'
-X-Frame-Options: DENY
-X-Content-Type-Options: nosniff
-```
-
-## Audit & Logging
-- **User Actions**: Login, data changes, permission changes
-- **System Events**: Errors, performance issues, security events
-- **Log Retention**: 90 days for compliance
-
-## Vulnerability Management
-- **Dependency Scanning**: Automated security scans
-- **Penetration Testing**: Quarterly assessments
-- **Security Updates**: Patch management process
-
----
-*Security measures implemented progressively*
-"""
-    
-    def _get_deployment_template(self) -> str:
-        """Get template for deployment specifications."""
-        return """# Deployment Specification
-
-## Environment Strategy
-- **Development**: Local development, hot reloading
-- **Staging**: Production-like for testing
-- **Production**: Live system with monitoring
-
-## Infrastructure Requirements
-- **Compute**: CPU, memory, storage needs
-- **Database**: Connection limits, backup strategy
-- **Networking**: Load balancer, CDN, DNS
-- **Monitoring**: Health checks, metrics, alerting
-
-## CI/CD Pipeline
-1. **Code Commit** → Git repository
-2. **Automated Tests** → Unit, integration, e2e
-3. **Build** → Docker images, static assets
-4. **Deploy to Staging** → Automated deployment
-5. **Smoke Tests** → Basic functionality verification
-6. **Deploy to Production** → Blue-green deployment
-
-## Rollback Strategy
-- **Database Migrations**: Reversible changes only
-- **Application Code**: Previous version available
-- **Static Assets**: CDN cache invalidation
-- **Recovery Time**: Target 5 minutes for rollback
-
-## Monitoring & Alerting
-- **Application Metrics**: Response time, error rate, throughput
-- **Infrastructure Metrics**: CPU, memory, disk, network
-- **Business Metrics**: User activity, conversion rates
-- **Alert Thresholds**: When to notify on-call team
-
----
-*Deployment process refined through iterations*
-"""
-    
-    def _get_business_rules_template(self) -> str:
-        """Get template for business rules and domain logic."""
-        return """# Business Rules & Domain Logic
-
-## Core Business Rules
-
-### User Account Management
-- **Rule 1**: Email addresses must be unique across the system
-- **Rule 2**: User accounts are soft-deleted to preserve data integrity
-- **Rule 3**: Password changes require current password verification
-
-### Data Validation Rules
-- **Input Validation**: All user inputs sanitized and validated
-- **Business Logic Validation**: Rules specific to domain
-- **Cross-field Validation**: Dependencies between form fields
-
-### Workflow Rules
-- **State Transitions**: Valid state changes for entities
-- **Approval Processes**: Who can approve what actions
-- **Timing Constraints**: When actions can be performed
-
-### Integration Rules
-- **External API Limits**: Rate limiting, retry logic
-- **Data Synchronization**: How external data is kept current
-- **Error Handling**: What to do when external systems fail
-
-## Domain-Specific Logic
-
-### [Domain Area 1]
-- Business rules specific to this domain
-- Calculations, formulas, algorithms
-- Compliance requirements
-
-### [Domain Area 2]
-- Additional business logic
-- Industry-specific requirements
-- Regulatory compliance
-
-## Exception Handling
-- **Business Rule Violations**: How to handle and communicate
-- **Data Inconsistency**: Detection and resolution
-- **System Errors**: Graceful degradation strategies
-
----
-*Business rules captured and refined through development*
-"""
     
     def _load_work_order_index(self) -> Dict[str, Any]:
         """Load work order tracking index."""
@@ -823,36 +371,8 @@ Provide only the markdown content for the document, no additional text or explan
     
     def _get_project_specific_template(self, doc_type: DocumentType, project_type: ProjectType) -> str:
         """Get project-type-specific template content."""
-        # For games, use simplified templates
-        if project_type == ProjectType.GAME:
-            if doc_type == DocumentType.CONTEXT:
-                return self._get_game_context_template()
-            elif doc_type == DocumentType.REQUIREMENTS:
-                return self._get_game_requirements_template()
-            elif doc_type == DocumentType.ARCHITECTURE:
-                return self._get_game_architecture_template()
-            elif doc_type == DocumentType.USER_STORIES:
-                return self._get_game_user_stories_template()
-            elif doc_type == DocumentType.DEPLOYMENT:
-                return self._get_game_deployment_template()
-        
-        # For CLI tools, use command-focused templates
-        elif project_type == ProjectType.CLI_TOOL:
-            if doc_type == DocumentType.CONTEXT:
-                return self._get_cli_context_template()
-            elif doc_type == DocumentType.REQUIREMENTS:
-                return self._get_cli_requirements_template()
-            elif doc_type == DocumentType.ARCHITECTURE:
-                return self._get_cli_architecture_template()
-            elif doc_type == DocumentType.USER_STORIES:
-                return self._get_cli_user_stories_template()
-            elif doc_type == DocumentType.DEPLOYMENT:
-                return self._get_cli_deployment_template()
-        
-        # For web apps and other complex projects, use full templates
-        if doc_type in self.document_templates:
-            return self.document_templates[doc_type]
-        
+        # All static templates have been removed in favor of AI generation
+        # This method now returns empty string as fallback for all project types
         return ""
     
     async def get_project_context(self, work_order_id: Optional[str] = None) -> Dict[str, Any]:
@@ -1133,3 +653,196 @@ Provide only the markdown content for the document, no additional text or explan
         # - Suggest optimal architecture patterns
         # - Recommend technology stack
         pass
+    
+    async def ai_generate_test_strategy(self, project_context: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Generate AI-driven test strategy based on project type and complexity.
+        
+        Args:
+            project_context: Context about the project including type, features, etc.
+            
+        Returns:
+            Dict containing test strategy recommendations
+        """
+        from integrations.ollama_client import OllamaClient
+        
+        try:
+            client = OllamaClient()
+            
+            # Get project information
+            project_type = project_context.get('project_type', 'unknown')
+            features = project_context.get('features', [])
+            complexity = project_context.get('complexity', 'medium')
+            tech_stack = project_context.get('tech_stack', [])
+            
+            # Create AI prompt for test strategy generation
+            prompt = f"""
+            Generate a comprehensive test strategy for a {project_type} project with the following characteristics:
+            
+            Project Type: {project_type}
+            Complexity: {complexity}
+            Features: {', '.join(features) if features else 'Standard features'}
+            Technology Stack: {', '.join(tech_stack) if tech_stack else 'Standard stack'}
+            
+            Please provide a detailed test strategy that includes:
+            
+            1. **Test Framework Recommendations**:
+               - Unit testing framework
+               - Integration testing approach
+               - End-to-end testing tools
+               - Performance testing strategy
+            
+            2. **Test Types by Priority**:
+               - Unit tests (what to test, coverage targets)
+               - Integration tests (API, database, external services)
+               - End-to-end tests (user workflows)
+               - Performance tests (load, stress, scalability)
+               - Security tests (if applicable)
+            
+            3. **Testing Configuration**:
+               - Test environment setup
+               - CI/CD integration
+               - Test data management
+               - Mock/stub strategies
+            
+            4. **Test Automation Strategy**:
+               - Automated test execution
+               - Test reporting
+               - Continuous testing approach
+               - Quality gates
+            
+            5. **Project-Specific Considerations**:
+               - Special testing needs for this project type
+               - Risk areas that need extra testing
+               - Performance benchmarks
+               - User acceptance criteria
+            
+            Format the response as a structured markdown document with clear sections.
+            """
+            
+            # Generate test strategy using AI
+            response = await client.generate_completion(prompt)
+            
+            # Parse the response and create strategy object
+            strategy = {
+                'test_framework': self._extract_test_framework(response, project_type),
+                'test_types': self._extract_test_types(response, project_type),
+                'automation_strategy': self._extract_automation_strategy(response),
+                'configuration': self._extract_test_configuration(response),
+                'project_specific': self._extract_project_specific_tests(response, project_type),
+                'ai_generated_content': response,
+                'generated_at': datetime.now().isoformat()
+            }
+            
+            self.logger.info(f"Generated AI test strategy for {project_type} project")
+            return strategy
+            
+        except Exception as e:
+            self.logger.error(f"Failed to generate AI test strategy: {str(e)}")
+            return self._fallback_test_strategy(project_context)
+    
+    def _extract_test_framework(self, ai_response: str, project_type: str) -> Dict[str, str]:
+        """Extract test framework recommendations from AI response."""
+        # Basic framework recommendations based on project type
+        frameworks = {
+            'GAME': {
+                'unit': 'pytest',
+                'integration': 'pytest',
+                'e2e': 'pygame testing',
+                'performance': 'performance profiling'
+            },
+            'WEB_APP': {
+                'unit': 'pytest/jest',
+                'integration': 'pytest/supertest',
+                'e2e': 'playwright/cypress',
+                'performance': 'k6/locust'
+            },
+            'CLI_TOOL': {
+                'unit': 'pytest',
+                'integration': 'pytest',
+                'e2e': 'subprocess testing',
+                'performance': 'benchmark testing'
+            }
+        }
+        
+        return frameworks.get(project_type, frameworks['WEB_APP'])
+    
+    def _extract_test_types(self, ai_response: str, project_type: str) -> List[Dict[str, Any]]:
+        """Extract test types and priorities from AI response."""
+        base_tests = [
+            {'type': 'unit', 'priority': 'high', 'coverage_target': '80%'},
+            {'type': 'integration', 'priority': 'medium', 'coverage_target': '60%'},
+            {'type': 'e2e', 'priority': 'medium', 'coverage_target': '40%'}
+        ]
+        
+        if project_type == 'WEB_APP':
+            base_tests.extend([
+                {'type': 'security', 'priority': 'high', 'coverage_target': '100%'},
+                {'type': 'performance', 'priority': 'medium', 'coverage_target': '100%'}
+            ])
+        elif project_type == 'GAME':
+            base_tests.extend([
+                {'type': 'performance', 'priority': 'high', 'coverage_target': '100%'},
+                {'type': 'usability', 'priority': 'medium', 'coverage_target': '80%'}
+            ])
+        
+        return base_tests
+    
+    def _extract_automation_strategy(self, ai_response: str) -> Dict[str, Any]:
+        """Extract automation strategy from AI response."""
+        return {
+            'ci_integration': True,
+            'automated_execution': True,
+            'test_reporting': 'junit/html',
+            'quality_gates': ['unit_tests_pass', 'coverage_threshold', 'integration_tests_pass'],
+            'continuous_testing': True
+        }
+    
+    def _extract_test_configuration(self, ai_response: str) -> Dict[str, Any]:
+        """Extract test configuration from AI response."""
+        return {
+            'test_environment': 'isolated',
+            'test_data_strategy': 'fixtures_and_mocks',
+            'mock_strategy': 'external_services',
+            'parallel_execution': True,
+            'test_isolation': True
+        }
+    
+    def _extract_project_specific_tests(self, ai_response: str, project_type: str) -> List[str]:
+        """Extract project-specific test considerations."""
+        specific_tests = {
+            'GAME': [
+                'Performance testing for frame rate',
+                'Input response time testing',
+                'Memory leak detection',
+                'Cross-platform compatibility'
+            ],
+            'WEB_APP': [
+                'API security testing',
+                'Database transaction testing',
+                'Authentication flow testing',
+                'Browser compatibility testing'
+            ],
+            'CLI_TOOL': [
+                'Command-line argument testing',
+                'Exit code validation',
+                'Error message testing',
+                'Platform-specific behavior'
+            ]
+        }
+        
+        return specific_tests.get(project_type, [])
+    
+    def _fallback_test_strategy(self, project_context: Dict[str, Any]) -> Dict[str, Any]:
+        """Fallback test strategy if AI generation fails."""
+        project_type = project_context.get('project_type', 'WEB_APP')
+        
+        return {
+            'test_framework': self._extract_test_framework('', project_type),
+            'test_types': self._extract_test_types('', project_type),
+            'automation_strategy': self._extract_automation_strategy(''),
+            'configuration': self._extract_test_configuration(''),
+            'project_specific': self._extract_project_specific_tests('', project_type),
+            'ai_generated_content': 'Fallback strategy used due to AI generation failure',
+            'generated_at': datetime.now().isoformat()
+        }

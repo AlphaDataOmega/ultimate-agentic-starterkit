@@ -880,3 +880,288 @@ class EnhancedProjectManager(BaseAgent):
             "next_step": "Create first work order via WorkOrderManager.create_next_work_order()",
             "notes": "Work orders will be created one at a time based on project progress"
         }
+    
+    async def ai_deployment_strategy(self, project_context: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Generate AI-enhanced deployment strategy based on project type and requirements.
+        
+        Args:
+            project_context: Context about the project including type, features, etc.
+            
+        Returns:
+            Dict containing deployment strategy recommendations
+        """
+        from integrations.ollama_client import OllamaClient
+        
+        try:
+            client = OllamaClient()
+            
+            # Get project information
+            project_type = project_context.get('project_type', 'unknown')
+            features = project_context.get('features', [])
+            complexity = project_context.get('complexity', 'medium')
+            tech_stack = project_context.get('tech_stack', [])
+            expected_load = project_context.get('expected_load', 'medium')
+            
+            # Create AI prompt for deployment strategy generation
+            prompt = f"""
+            Generate a comprehensive deployment strategy for a {project_type} project with the following characteristics:
+            
+            Project Type: {project_type}
+            Complexity: {complexity}
+            Expected Load: {expected_load}
+            Features: {', '.join(features) if features else 'Standard features'}
+            Technology Stack: {', '.join(tech_stack) if tech_stack else 'Standard stack'}
+            
+            Please provide a detailed deployment strategy that includes:
+            
+            1. **Environment Configuration**:
+               - Development environment setup
+               - Staging environment requirements
+               - Production environment specifications
+               - Environment-specific configurations
+            
+            2. **Infrastructure Requirements**:
+               - Server specifications and sizing
+               - Database deployment strategy
+               - Load balancing and scaling
+               - Security configurations
+            
+            3. **CI/CD Pipeline**:
+               - Source code management
+               - Build process automation
+               - Testing integration
+               - Deployment automation
+               - Rollback procedures
+            
+            4. **Monitoring and Logging**:
+               - Application monitoring
+               - Infrastructure monitoring
+               - Log aggregation and analysis
+               - Alerting and notification systems
+            
+            5. **Security and Compliance**:
+               - SSL/TLS configuration
+               - Access control and authentication
+               - Data encryption strategies
+               - Compliance requirements
+            
+            6. **Backup and Recovery**:
+               - Data backup strategies
+               - Disaster recovery procedures
+               - Business continuity planning
+               - Recovery time objectives
+            
+            7. **Performance and Scalability**:
+               - Caching strategies
+               - Database optimization
+               - Auto-scaling configurations
+               - Performance monitoring
+            
+            8. **Project-Specific Considerations**:
+               - Special deployment needs for this project type
+               - Platform-specific requirements
+               - Third-party integrations
+               - Maintenance procedures
+            
+            Format the response as a structured deployment guide with clear sections and actionable steps.
+            """
+            
+            # Generate deployment strategy using AI
+            response = await client.generate_completion(prompt)
+            
+            # Parse the response and create strategy object
+            strategy = {
+                'project_type': project_type,
+                'environments': self._extract_environment_config(response, project_type),
+                'infrastructure': self._extract_infrastructure_requirements(response, project_type),
+                'ci_cd_pipeline': self._extract_ci_cd_pipeline(response, project_type),
+                'monitoring': self._extract_monitoring_config(response),
+                'security': self._extract_security_config(response, project_type),
+                'backup_recovery': self._extract_backup_strategy(response),
+                'performance': self._extract_performance_config(response, project_type),
+                'project_specific': self._extract_deployment_specific_needs(response, project_type),
+                'ai_generated_content': response,
+                'generated_at': datetime.now().isoformat()
+            }
+            
+            self.logger.info(f"Generated AI deployment strategy for {project_type} project")
+            return strategy
+            
+        except Exception as e:
+            self.logger.error(f"Failed to generate AI deployment strategy: {str(e)}")
+            return self._fallback_deployment_strategy(project_context)
+    
+    def _extract_environment_config(self, ai_response: str, project_type: str) -> Dict[str, Any]:
+        """Extract environment configuration from AI response."""
+        base_config = {
+            'development': {
+                'description': 'Local development environment',
+                'setup': 'Docker Compose or local installation',
+                'database': 'Local SQLite/PostgreSQL',
+                'external_services': 'Mock services'
+            },
+            'staging': {
+                'description': 'Pre-production testing environment',
+                'setup': 'Production-like configuration',
+                'database': 'Staging database with sanitized data',
+                'external_services': 'Staging or sandbox services'
+            },
+            'production': {
+                'description': 'Live production environment',
+                'setup': 'High availability configuration',
+                'database': 'Production database with backups',
+                'external_services': 'Production services'
+            }
+        }
+        
+        if project_type == 'GAME':
+            base_config['production']['setup'] = 'Cross-platform distribution'
+            base_config['production']['database'] = 'Minimal database needs'
+        
+        return base_config
+    
+    def _extract_infrastructure_requirements(self, ai_response: str, project_type: str) -> Dict[str, Any]:
+        """Extract infrastructure requirements from AI response."""
+        requirements = {
+            'GAME': {
+                'server_specs': '2 CPU, 4GB RAM, 20GB SSD',
+                'database': 'SQLite or minimal PostgreSQL',
+                'load_balancing': 'Not required for single-player',
+                'scaling': 'Horizontal scaling for multiplayer'
+            },
+            'WEB_APP': {
+                'server_specs': '4 CPU, 8GB RAM, 100GB SSD',
+                'database': 'PostgreSQL with read replicas',
+                'load_balancing': 'Nginx load balancer',
+                'scaling': 'Auto-scaling based on CPU/memory'
+            },
+            'CLI_TOOL': {
+                'server_specs': '2 CPU, 2GB RAM, 10GB SSD',
+                'database': 'Not required or minimal',
+                'load_balancing': 'Not applicable',
+                'scaling': 'Distribution-based scaling'
+            }
+        }
+        
+        return requirements.get(project_type, requirements['WEB_APP'])
+    
+    def _extract_ci_cd_pipeline(self, ai_response: str, project_type: str) -> Dict[str, Any]:
+        """Extract CI/CD pipeline configuration from AI response."""
+        return {
+            'source_control': 'Git with feature branch workflow',
+            'build_triggers': 'Push to main, pull requests',
+            'build_steps': [
+                'Install dependencies',
+                'Run unit tests',
+                'Run integration tests',
+                'Build application',
+                'Run security scans'
+            ],
+            'deployment_steps': [
+                'Deploy to staging',
+                'Run smoke tests',
+                'Manual approval gate',
+                'Deploy to production',
+                'Post-deployment verification'
+            ],
+            'rollback_procedure': 'Automated rollback on failure detection'
+        }
+    
+    def _extract_monitoring_config(self, ai_response: str) -> Dict[str, Any]:
+        """Extract monitoring configuration from AI response."""
+        return {
+            'application_monitoring': 'APM tools (New Relic, Datadog)',
+            'infrastructure_monitoring': 'System metrics (CPU, memory, disk)',
+            'log_aggregation': 'Centralized logging (ELK stack)',
+            'alerting': 'Email/Slack notifications for critical issues',
+            'dashboards': 'Real-time status dashboards'
+        }
+    
+    def _extract_security_config(self, ai_response: str, project_type: str) -> Dict[str, Any]:
+        """Extract security configuration from AI response."""
+        base_security = {
+            'ssl_tls': 'TLS 1.3 with proper certificates',
+            'access_control': 'Role-based access control',
+            'data_encryption': 'AES-256 encryption for sensitive data',
+            'network_security': 'Firewall rules and VPN access'
+        }
+        
+        if project_type == 'WEB_APP':
+            base_security.update({
+                'authentication': 'JWT tokens with refresh rotation',
+                'api_security': 'Rate limiting and input validation',
+                'session_management': 'Secure session handling'
+            })
+        
+        return base_security
+    
+    def _extract_backup_strategy(self, ai_response: str) -> Dict[str, Any]:
+        """Extract backup strategy from AI response."""
+        return {
+            'database_backups': 'Daily full backups, hourly incremental',
+            'file_backups': 'Application files and configurations',
+            'retention_policy': '30 days local, 90 days offsite',
+            'disaster_recovery': 'Multi-region backup strategy',
+            'testing': 'Monthly backup restoration tests'
+        }
+    
+    def _extract_performance_config(self, ai_response: str, project_type: str) -> Dict[str, Any]:
+        """Extract performance configuration from AI response."""
+        config = {
+            'caching': 'Redis for application caching',
+            'database_optimization': 'Query optimization and indexing',
+            'cdn': 'Content delivery network for static assets',
+            'performance_monitoring': 'Response time and throughput metrics'
+        }
+        
+        if project_type == 'GAME':
+            config.update({
+                'performance_profiling': 'Frame rate and memory monitoring',
+                'optimization': 'Asset optimization and compression'
+            })
+        
+        return config
+    
+    def _extract_deployment_specific_needs(self, ai_response: str, project_type: str) -> List[str]:
+        """Extract project-specific deployment considerations."""
+        specific_needs = {
+            'GAME': [
+                'Cross-platform compatibility testing',
+                'Distribution platform integration',
+                'Save game data synchronization',
+                'Anti-cheat system deployment'
+            ],
+            'WEB_APP': [
+                'Database migration management',
+                'API versioning strategy',
+                'Static asset optimization',
+                'Browser compatibility testing'
+            ],
+            'CLI_TOOL': [
+                'Package manager distribution',
+                'Version management system',
+                'Installation script creation',
+                'Cross-platform binary builds'
+            ]
+        }
+        
+        return specific_needs.get(project_type, [])
+    
+    def _fallback_deployment_strategy(self, project_context: Dict[str, Any]) -> Dict[str, Any]:
+        """Fallback deployment strategy if AI generation fails."""
+        project_type = project_context.get('project_type', 'WEB_APP')
+        
+        return {
+            'project_type': project_type,
+            'environments': self._extract_environment_config('', project_type),
+            'infrastructure': self._extract_infrastructure_requirements('', project_type),
+            'ci_cd_pipeline': self._extract_ci_cd_pipeline('', project_type),
+            'monitoring': self._extract_monitoring_config(''),
+            'security': self._extract_security_config('', project_type),
+            'backup_recovery': self._extract_backup_strategy(''),
+            'performance': self._extract_performance_config('', project_type),
+            'project_specific': self._extract_deployment_specific_needs('', project_type),
+            'ai_generated_content': 'Fallback deployment strategy used due to AI generation failure',
+            'generated_at': datetime.now().isoformat()
+        }
